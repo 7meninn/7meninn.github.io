@@ -1,20 +1,44 @@
-import { Button } from "@/components/ui/button"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/app-sidebar"
+import { getMarkdownRoutes } from "@/lib/content"
+import { MarkdownPage } from "@/pages/MarkdownPage"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
-export function App() {
+function App() {
+  const routes = getMarkdownRoutes()
+
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
-      </div>
-    </div>
+    <BrowserRouter>
+      <TooltipProvider>
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full">
+            <AppSidebar />
+            <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+              <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
+                <SidebarTrigger />
+                <span className="font-bold">Bimal Tyagi</span>
+              </header>
+              <main className="flex-1 overflow-y-auto bg-background p-6 md:p-10 lg:p-16">
+                <div className="mx-auto max-w-3xl">
+                  <Routes>
+                    {routes.map((route) => (
+                      <Route
+                        key={route.path}
+                        path={route.path}
+                        element={<MarkdownPage route={route} />}
+                      />
+                    ))}
+                    {/* Fallback route */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </div>
+              </main>
+            </div>
+          </div>
+        </SidebarProvider>
+      </TooltipProvider>
+    </BrowserRouter>
   )
 }
 
