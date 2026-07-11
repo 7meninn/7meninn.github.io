@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { getMarkdownRoutes } from "@/lib/content"
 import { MarkdownPage } from "@/pages/MarkdownPage"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { MusicPlayer } from "@/components/MusicPlayer"
 
 function App() {
   const routes = getMarkdownRoutes()
@@ -36,6 +37,7 @@ function App() {
               </main>
             </div>
           </div>
+          <MusicPlayer />
         </SidebarProvider>
       </TooltipProvider>
     </BrowserRouter>
