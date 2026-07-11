@@ -1,44 +1,35 @@
-import { Link, useLocation } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { getMarkdownRoutes } from "@/lib/content"
+import { getMarkdownTree } from "@/lib/content"
+import { TreeView } from "@/components/tree-view"
+import { SearchCommand } from "./SearchCommand"
 
 export function AppSidebar() {
-  const routes = getMarkdownRoutes()
+  const tree = getMarkdownTree()
+  const navigate = useNavigate()
   const location = useLocation()
 
   return (
     <Sidebar>
       <SidebarHeader className="p-4 flex flex-row items-center justify-between border-b border-border/50">
         <div className="font-bold text-lg">Bimal Tyagi</div>
+        <SearchCommand />
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {routes.map((route) => {
-                const isActive = location.pathname === route.path || 
-                  (route.path !== "/" && location.pathname.startsWith(route.path))
-                  
-                return (
-                  <SidebarMenuItem key={route.path}>
-                    <SidebarMenuButton render={<Link to={route.path} />} isActive={isActive}>
-                      {route.title}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="px-2 pt-4">
+        <TreeView
+          data={tree}
+          initialSelectedItemId={location.pathname}
+          onSelectChange={(item) => {
+            // Only navigate if it's a leaf node containing a path (starting with /)
+            if (item && (!item.children || item.children.length === 0) && item.id.startsWith('/')) {
+              navigate(item.id)
+            }
+          }}
+        />
       </SidebarContent>
     </Sidebar>
   )

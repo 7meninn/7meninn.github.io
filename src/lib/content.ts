@@ -1,42 +1,94 @@
+import type { TreeDataItem } from "@/components/tree-view"
+
 export interface MarkdownRoute {
   title: string;
   path: string;
-  folderId: string;
-  originalFolder: string;
+  filePath: string;
   getContent: () => Promise<string>;
 }
 
 export function getMarkdownRoutes(): MarkdownRoute[] {
-  // Use import.meta.glob to load raw markdown files
-  const modules = import.meta.glob('../content/*/*.md', { query: '?raw', import: 'default' });
-
+  const modules = import.meta.glob('../content/**/*.md', { query: '?raw', import: 'default' });
   const routes: MarkdownRoute[] = [];
 
   for (const path in modules) {
-    // path looks like: ../content/01-Home/index.md
-    const parts = path.split('/');
-    if (parts.length >= 3) {
-      const folderName = parts[parts.length - 2]; // e.g. '01-Home'
-      
-      // Remove prefix like '01-'
-      const titleMatch = folderName.match(/^\d+-(.+)$/);
-      const title = titleMatch ? titleMatch[1] : folderName;
-      
-      // Default to '/' for Home, otherwise /lowercase-title
-      const routePath = title.toLowerCase() === 'home' ? '/' : `/${title.toLowerCase()}`;
-
-      routes.push({
-        title,
-        path: routePath,
-        folderId: title,
-        originalFolder: folderName,
-        getContent: modules[path] as () => Promise<string>,
-      });
+    const relativePath = path.replace('../content/', '');
+    let slug = relativePath.replace(/\.md$/, '');
+    
+    // strip out numeric prefixes for URLs
+    slug = slug.split('/').map(part => part.replace(/^\d+-/, '')).join('/');
+    
+    if (slug.toLowerCase() === 'home/index' || slug.toLowerCase() === 'home') {
+      slug = '';
+    } else if (slug.endsWith('/index')) {
+      slug = slug.replace(/\/index$/, '');
     }
+
+    const routePath = `/${slug.toLowerCase()}`;
+    const filename = relativePath.split('/').pop()?.replace(/\.md$/, '') || '';
+    let title = filename.replace(/^\d+-/, '');
+    
+    if (title === 'index') {
+       title = relativePath.split('/')[relativePath.split('/').length - 2]?.replace(/^\d+-/, '') || 'Home';
+    }
+
+    routes.push({
+      title,
+      path: routePath,
+      filePath: relativePath,
+      getContent: modules[path] as () => Promise<string>,
+    });
   }
 
-  // Sort by original folder name (e.g., 01-Home comes before 02-Notes)
-  routes.sort((a, b) => a.originalFolder.localeCompare(b.originalFolder));
+  // Sort by filePath
+  routes.sort((a, b) => a.filePath.localeCompare(b.filePath));
 
   return routes;
+}
+
+export function getMarkdownTree(): TreeDataItem[] {
+  const routes = getMarkdownRoutes();
+  const root: TreeDataItem[] = [];
+  
+  for (const route of routes) {
+    const parts = route.filePath.split('/');
+    let currentLevel = root;
+    
+    for (let i = 0; i < parts.length; i++) {
+      const isLast = i === parts.length - 1;
+      const rawPart = parts[i];
+      const name = rawPart.replace(/^\d+-/, '').replace(/\.md$/, '');
+      const id = parts.slice(0, i + 1).join('/'); // unique id based on file path
+      
+      let node = currentLevel.find(n => n.id === id);
+      
+      if (!node) {
+        if (isLast) {
+          if (name === 'index' && i > 0) {
+             node = { id: route.path, name: 'Overview' };
+          } else {
+             node = { id: route.path, name: name };
+          }
+        } else {
+          node = { id, name, children: [] };
+        }
+        currentLevel.push(node);
+      } else {
+          // If a node already exists but we are at the leaf and it's 'index'
+          if (isLast && name === 'index' && node.children) {
+              node.children.unshift({
+                  id: route.path,
+                  name: 'Overview'
+              });
+          }
+      }
+      
+      if (!isLast) {
+        if (!node.children) node.children = [];
+        currentLevel = node.children;
+      }
+    }
+  }
+  
+  return root;
 }
