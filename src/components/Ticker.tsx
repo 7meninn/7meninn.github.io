@@ -1,9 +1,24 @@
-import tickerText from '../config/ticker.txt?raw';
+import * as React from 'react';
+import tickerTextRaw from '../config/ticker.txt?raw';
 
 export function Ticker() {
-  // To ensure seamless infinite scrolling, the text just needs to be wider than the screen.
-  // We add a separator at the end so it flows into the duplicate span nicely.
-  const repeatedText = tickerText + " • ";
+  // Split the raw text into individual quotes, randomize the starting position, and rejoin.
+  // We use useMemo so it calculates once per page load.
+  const repeatedText = React.useMemo(() => {
+    // Split by the bullet point separator
+    const quotes = tickerTextRaw.split(' • ').map(q => q.trim()).filter(Boolean);
+    
+    if (quotes.length === 0) return "";
+    
+    // Pick a random starting index
+    const startIndex = Math.floor(Math.random() * quotes.length);
+    
+    // Shift the array so the random quote is first, wrapping the rest to the end
+    const randomizedQuotes = [...quotes.slice(startIndex), ...quotes.slice(0, startIndex)];
+    
+    // Rejoin them with the separator and add one at the end for the seamless loop
+    return randomizedQuotes.join(' • ') + ' • ';
+  }, []);
 
   return (
     <div className="w-full overflow-hidden bg-primary text-primary-foreground py-1 flex whitespace-nowrap text-[11px] font-bold uppercase tracking-wider select-none shrink-0 border-b border-border/10">
