@@ -24,7 +24,8 @@ export function getMarkdownRoutes(): MarkdownRoute[] {
       slug = slug.replace(/\/index$/, '');
     }
 
-    const routePath = `/${slug.toLowerCase()}`;
+    // Replace spaces with hyphens to make URL safe
+    const routePath = `/${slug.toLowerCase().replace(/\s+/g, '-')}`;
     const filename = relativePath.split('/').pop()?.replace(/\.md$/, '') || '';
     let title = filename.replace(/^\d+-/, '');
     
@@ -90,5 +91,24 @@ export function getMarkdownTree(): TreeDataItem[] {
     }
   }
   
+  // Post-process to make folders with index.md clickable instead of having an Overview child
+  function postProcess(nodes: TreeDataItem[]) {
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      if (node.children) {
+        // Find if it has an "Overview" child which serves as the index route
+        const indexChildIdx = node.children.findIndex(c => c.name === 'Overview' && c.id.startsWith('/'));
+        if (indexChildIdx !== -1) {
+          const indexChild = node.children[indexChildIdx];
+          node.url = indexChild.id; // Store route on the folder
+          node.children.splice(indexChildIdx, 1); // Remove the Overview child
+        }
+        // Recursively process remaining children
+        postProcess(node.children);
+      }
+    }
+  }
+  
+  postProcess(root);
   return root;
 }

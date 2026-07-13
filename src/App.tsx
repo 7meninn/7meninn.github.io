@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { MarkdownPage } from "@/pages/MarkdownPage"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { MusicPlayer } from "@/components/MusicPlayer"
+import { Ticker } from "@/components/Ticker"
 
 function App() {
 
@@ -12,9 +13,11 @@ function App() {
     <BrowserRouter>
       <TooltipProvider>
         <SidebarProvider>
-          <div className="flex h-screen w-full overflow-hidden">
-            <AppSidebar />
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="flex flex-col h-screen w-full overflow-hidden">
+            <Ticker />
+            <div className="flex flex-1 min-h-0 w-full overflow-hidden">
+              <AppSidebar />
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
                 <SidebarTrigger />
                 <span className="font-bold">Bimal Tyagi</span>
@@ -26,6 +29,7 @@ function App() {
                   </Routes>
                 </div>
               </main>
+            </div>
             </div>
           </div>
           <MusicPlayer />

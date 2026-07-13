@@ -19,6 +19,7 @@ const dragOverVariants = cva(
 interface TreeDataItem {
     id: string
     name: string
+    url?: string
     icon?: React.ComponentType<{ className?: string }>
     selectedIcon?: React.ComponentType<{ className?: string }>
     openIcon?: React.ComponentType<{ className?: string }>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useLocation } from "react-router-dom"
+import { useLocation, Link } from "react-router-dom"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkWikiLink from "remark-wiki-link"
@@ -7,12 +7,14 @@ import remarkFrontmatter from "remark-frontmatter"
 import { getMarkdownRoutes } from "@/lib/content"
 import { Skeleton } from "@/components/ui/skeleton"
 
+const routes = getMarkdownRoutes()
+
 export function MarkdownPage() {
   const location = useLocation()
-  const routes = getMarkdownRoutes()
   
-  // Find route match
-  const currentRoute = routes.find(r => r.path === location.pathname) || routes.find(r => r.path.startsWith(location.pathname) && r.path !== "/")
+  // Find route match (decode URI to handle spaces or special characters)
+  const decodedPath = decodeURIComponent(location.pathname)
+  const currentRoute = routes.find(r => r.path === decodedPath) || routes.find(r => r.path.startsWith(decodedPath) && r.path !== "/")
   
   const [content, setContent] = useState<string | null>(null)
   
@@ -44,12 +46,23 @@ export function MarkdownPage() {
       ) : (
         <article className="prose prose-zinc dark:prose-invert prose-p:leading-relaxed prose-pre:bg-zinc-900 prose-pre:text-zinc-50 max-w-none">
           <ReactMarkdown 
+            components={{
+              a: ({ node, ...props }) => {
+                if (props.href && props.href.startsWith('/')) {
+                  return <Link to={props.href} {...props} />
+                }
+                return <a target="_blank" rel="noopener noreferrer" {...props} />
+              }
+            }}
             remarkPlugins={[
               remarkGfm,
               remarkFrontmatter, // Parses frontmatter and removes it from output
               [remarkWikiLink, {
                 // Configure how [[Page Name]] maps to URLs
-                pageResolver: (name: string) => [name.toLowerCase().replace(/ /g, '-')],
+                pageResolver: (name: string) => {
+                  const matched = routes.find(r => r.title.toLowerCase() === name.toLowerCase())
+                  return [matched ? matched.path.substring(1) : name.toLowerCase().replace(/\s+/g, '-')]
+                },
                 hrefTemplate: (permalink: string) => `/${permalink}`
               }]
             ]}
